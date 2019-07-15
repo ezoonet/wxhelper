@@ -9,7 +9,32 @@
      <!--帮助层-->
     <div class="help" v-if="showHelp">
       <div class="help-title">新手指南</div>
-      <div class="help-text">sdfsdfs</div>
+      <div class="help-text1">小贴士：点击“侧边栏”尝试更多功能，再来阅读用户指南，可以更加快捷熟悉各种功能哦。</div>
+      <div class="help-text2">
+        <ul>
+          <li>1.工具简介及功能介绍</li>
+          <li>2.机器人使用攻略</li>      
+          <li>3.常见问题</li>
+       </ul>
+      </div>
+      <div class="help-title">基础功能介绍</div>
+      <div class="help-text2">
+        <ul>
+          <li>1.如何使用素材管理？</li>
+          <li>2.如何使用群发管理？</li>      
+          <li>3.如何删除群？</li>
+       </ul>
+      </div>
+      <div class="help-title">群聊功能介绍</div>
+      <div class="help-text2">
+        <ul>
+          <li>1.如何统计群内数据？</li>
+          <li>2.如何设置自动回复？</li>      
+          <li>3.如何设置管理员</li>
+          <li>4.如何踢人？</li>    
+       </ul>
+      </div>
+
     </div>
  <!--弹出层-->
  
@@ -17,14 +42,14 @@
      <div class="pop">
         <div class="pop-top">
           <img src="https://img.yzcdn.cn/vant/logo.png">
-            <van-button type="primary" plain size="normal" @click="">注销账户</van-button>
+            <van-button type="primary" plain size="normal" @click="logout">注销账户</van-button>
         </div>
         <van-divider />
       <div class="pop-body">
           <van-cell-group>
-            <van-cell title="机器人配置" icon="location-o" />
-            <van-cell title="分享应用" icon="location-o" />
-            <van-cell title="意见反馈" icon="location-o" />
+            <van-cell @click="gourl('/botconf')" title="机器人配置" icon="location-o" />
+            <van-cell @click="gourl('/share')" title="分享应用" icon="location-o" />
+            <van-cell @click="gourl('/suggess')"  title="意见反馈" icon="location-o" />
           </van-cell-group>
         </div>
       </div>
@@ -34,12 +59,12 @@
     <div class="fun-box" v-if="!showHelp">
         <div class="fun-box-manager">
             <van-row type="flex">
-                <van-col span="8">
+                <van-col span="8" @click.native="gourl('/media')">
                   <van-icon name="video-o" />
                   <span>素材管理</span>
                 </van-col>
                 <van-col span="8"></van-col>
-                <van-col span="8">
+                <van-col span="8"  @click.native="gourl('/groupsend')">
                   <van-icon name="cluster-o" />
                   <span>群发管理</span>
                 </van-col>
@@ -56,11 +81,35 @@
             <div slot="action" @click="onSearch">搜索</div>
           </van-search>
         </div>
-        <div class = "group-list">
+        <div class = "group-list" >
+
           <van-collapse v-model="activeName" accordion>
-            <van-collapse-item title="标题1" name="1">内容</van-collapse-item>
-            <van-collapse-item title="标题2" name="2">内容</van-collapse-item>
-            <van-collapse-item title="标题3" name="3">内容</van-collapse-item>
+            <van-collapse-item :title="item.name" :name="item.id"  v-for="(item,i) in groupList" :key = i>
+              <div>
+                <van-grid :column-num="2">
+                  <van-grid-item
+                    icon="photo-o"
+                    text="群成员管理"
+                    @click="gourl('/grouplist/'+item.id)"
+                  />
+                <van-grid-item
+                    @click="gourl('/kick/'+item.id)"
+                    icon="photo-o"
+                    text="踢人"
+                  />
+                <van-grid-item
+                   @click="gourl('/reply/'+item.id)" 
+                    icon="photo-o"
+                    text="自动回复"
+                  />
+                <van-grid-item
+                     @click="gourl('/collect/'+item.id)" 
+                    icon="photo-o"
+                    text="数据分析"
+                  /> 
+                </van-grid>
+            </div>
+            </van-collapse-item>
           </van-collapse>
         </div>
 
@@ -72,7 +121,7 @@
 </template>
 
 <script>
-import { Toast } from 'vant';
+import { Toast,Dialog } from 'vant';
 import { login} from '@/api/api'
 export default {
   data() {
@@ -81,12 +130,30 @@ export default {
         showPop:false,
         value: '',
         activeName: '',
+        groupList:[{
+          id:0,
+          name:'名称1'
+        },{
+          id:1,
+          name:'名称2'
+        }]
       }
     },
   created(){
     
   },
   methods: {
+
+    logout(){
+      Dialog.confirm({
+        title: '提示',
+        message: '退出登录将无法使用机器人，无法使用群管理功能，是否确定退出？'
+      }).then(() => {
+        // on confirm
+      }).catch(() => {
+        // on cancel
+      });
+    },
     onSearch(){
 
     },
@@ -138,5 +205,19 @@ export default {
       .pop-body
         padding-left:5px
         text-align:left
+    .help
+      text-align:left
+      .help-title
+        color:green
+        padding:10px 0px 40px 0 
+      .help-text1
+        font-size:12px
+        padding-bottom:15px
+        color:#666
+      .help-text2
+        font-size:12px
+        li
+          padding-bottom:5px
+
       
 </style>

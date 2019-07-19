@@ -9,21 +9,25 @@
         />
     </div>
     <div class="body" v-if="!showAdd">
-      <van-tabs v-model="active">
+      <van-tabs v-model="active" @change = "onTabchange()">
         <van-tab title="新人入群">
                <van-cell-group>
-                  <van-cell   value="">
+                  <van-cell   value="" style="    align-items: center;">
                     <template slot="title" >
-                      <span class="custom-title">{{newText}}</span>
+                      <span class="custom-title">
+                          <van-field autofocus  v-model="newText" :disabled="textDisabled" placeholder="请输入内容" />
+                      </span>
                     
                     </template>
                       <van-icon
                         slot="right-icon"
                         name="edit"
+                        @click.native="updateNewText(0)"
                         style="padding-right:10px;line-height: inherit;">
                       </van-icon>
                       <van-icon
                         slot="right-icon"
+                        @click.native="updateNewText(1)"
                         name="play-circle-o"
                         style="padding-right:10px;line-height: inherit;">
                       </van-icon>
@@ -36,23 +40,27 @@
         </van-tab>
       
       <van-tab title="关键词回复">
-        <van-cell-group>
-            <van-cell   value="">
+        <van-cell-group v-for="(item,i) in keysList" :key="i">
+            <van-cell   value="" style="align-items: center;">
+              <van-tag style="margin-right:5px"type="danger">{{item.type == 0?'私':item.type==1?'群':''}}</van-tag>
               <template slot="title" >
-                <span class="custom-title">关键词</span>
+                <span class="custom-title">  <van-field autofocus  v-model="item.keywords" :disabled="keyTextDisabled" placeholder="请输入内容" /></span>
               
               </template>
-                <van-icon
+          <!--       <van-icon
+                  @click="_keyReply(0,item)"
                   slot="right-icon"
                   name="eye-o"
                   style="padding-right:10px;line-height: inherit;">
-                </van-icon>
+                </van-icon> -->
                 <van-icon
+                 @click="_keyReply(1,item)"
                   slot="right-icon"
                   name="more-o"
                   style="padding-right:10px;line-height: inherit;">
                 </van-icon>
                <van-icon
+                 @click="_keyReply(2,item)"
                   slot="right-icon"
                   name="delete"
                   style="padding-right:10px;line-height: inherit;">
@@ -67,11 +75,11 @@
              <van-row >
                   <van-col span="10">关键词（上限5个）</van-col>
                   <van-col span="6"> </van-col>
-                  <van-col span="8" style="color:green"><span style="padding-right: 6px"><van-icon name="plus" /></span><span>添加关键词</span></van-col>
+                  <van-col span="8" style="color:green"  @click.native="_addFrom(0)"  ><span style="padding-right: 6px"><van-icon name="plus" /></span><span>添加关键词</span></van-col>
                 </van-row>
               <div class="add-reply-list">
 
-                   <span v-for="(item,i) in keys" :key="i" class="key-box" > {{item}} <label @click="del">✖️</label> </span>      
+                   <span v-for="(item,i) in keys" :key="i" class="key-box" > {{item}} <label @click="_delkey(item)">✖️</label> </span>      
              
               </div>
             </div>
@@ -80,21 +88,25 @@
                 <van-row >
                   <van-col span="10">回复（随机上限3个）</van-col>
                   <van-col span="6"> </van-col>
-                  <van-col span="8" style="color:green"><span style="padding-right: 6px"><van-icon name="plus" /></span><span>添加回复</span></van-col>
+                  <van-col span="8" @click.native="_addFrom(1)" style="color:green"><span style="padding-right: 6px" ><van-icon name="plus" /></span><span >添加回复</span></van-col>
                 </van-row>
-                <van-cell-group>
-                  <van-cell   value="">
+                <van-cell-group v-for="(item,i) in replyList" :key="i">
+                  <van-cell   value=""  style="align-items: center;">
                     <template slot="title" >
-                      <span class="custom-title">深度放松的方式</span>
+                      <span class="custom-title">
+                       <van-field autofocus  v-model="item.text" :disabled="RpyTextDisabled" placeholder="请输入内容" />
+                     </span>
                     
                     </template>
                       <van-icon
                         slot="right-icon"
                         name="edit"
+                        @click="_editRly(item)"
                         style="padding-right:10px;line-height: inherit;">
                       </van-icon>
                       <van-icon
                         slot="right-icon"
+                        @click="_delRly(item)"
                         name="delete"
                         style="padding-right:10px;line-height: inherit;">
                       </van-icon>
@@ -130,37 +142,254 @@
             type="textarea"
             placeholder="请输入留言"
             rows="10"
-         
+           
           />
         </van-cell-group>
          <van-button type="primary" plain size="large" @click="saveNew">保存</van-button>
     </div>
+
+    <van-dialog
+        v-model="addShow"
+        title="请输入内容"
+        show-cancel-button
+        @confirm ="onConfirm"
+      >
+         <van-field autofocus  v-model="addText" placeholder="请输入内容" />
+</van-dialog>
+
   </div>
 </template>
 
 <script>
-import { Toast } from 'vant';
+import { Toast,Dialog } from 'vant';
 import { login} from '@/api/api'
 export default {
   data() {
       return {
-        newText:'多少岁的方式',
+        addType:0,
+        addText:'',
+        addShow:false,
+        keyTextDisabled:true,
+        RpyTextDisabled:true,
+        keyText:'dsfsfdsf',
+        textDisabled:true,
+        newText:'',
         showAdd:false,
         keys:['房贷首付','fdsf','fs','sfsfs','fsdfsfsdfsf'],
+        replyList:[{
+          id:0,
+          text:'sdfsdfs'
+        },{
+          id:1,
+          text:'sdfsdf11s'
+        },{
+          id:2,
+          text:'sdfsd22fs'
+        }
+
+        ],
         showReply:false,
-        active:1,
+        keysList:[{
+          id:0,
+          text:'sdf'
+        },{
+          id:1,
+          text:'sdfdff'
+        },{
+          id:2,
+          text:'sdfddff'
+        },{
+          id:3,
+          text:'sdsdfsf'
+        },
+        ],
+        active:0,
         id:this.$route.params.id,
       }
     },
   created(){
-    console.log(this.id)
+    this._getNewReply()
+
   },
   methods: {
+    onTabchange(){
+      console.log(this.active)
+      if (this.active == 0) {
+        //new
+        this._getNewReply()
+      } else {
+        this._getReply()
+      }
+    },
+    _getReply(){
+      let obj = {}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.groupid = this.id
+      obj.type = 0
+      this.$getapi('robot/manageReply',obj).then(res=>{
+        if (res.status == 200 ) {
+          this.keysList = res.data
+        } else {
+          Toast.fail(res.msg)
+        }
+      })
+    },
+    _getNewReply(){
+      let obj = {}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.groupid = this.id
+      obj.type = 0
+      this.$getapi('robot/manageNewreply',obj).then(res=>{
+        if (res.status == 200 ) {
+          this.newText = res.data.content
+        } else {
+          Toast.fail(res.msg)
+        }
+      })
+    },
+    _delRly(item){
+      Dialog.confirm({
+        title: '提示',
+        message: '确定删除'
+      }).then(() => {
+        // on confirm
+      }).catch(() => {
+        // on cancel
+      });
+    },
+    _editRly(item){
+      console.log(item)
+      this.RpyTextDisabled = !this.RpyTextDisabled
+
+    },
+    onConfirm(){
+      if (this.addType == 0) {
+          this.keys.push(this.addText)
+         
+      }
+       if (this.addType == 1) {
+          let obj = {
+            id:this.replyList.length+1,
+            text:this.addText
+          }
+          this.replyList.push(obj)
+      } 
+
+    },
+
+    _addFrom(type){
+      console.log(type)
+      //0 关键词
+      //1 回复
+      if (type ==0 && this.replyList.length>5) {
+        Toast.fail('超过5个')
+        return
+      }
+      if (type ==1 && this.replyList.length>3) {
+        Toast.fail('超过3个')
+        return
+      }
+      this.addType = type
+      this.addShow = true
+
+    },
+    _keyReply(type,item) {
+      if (type ==0) {
+        // switcher
+        console.log(item.id)
+
+      } 
+      if (type ==1) {
+        // edit
+        console.log(item.id)
+        console.log(item.content)
+        this.keyTextDisabled = !this.keyTextDisabled
+      }
+      if (type == 2) {
+        //delete
+         Dialog.confirm({
+        title: '提示',
+          message: '确定删除'
+        }).then(() => {
+          console.log(item)
+          // on confirm
+          let obj = {}
+          obj.Uin = localStorage['_stock_Uin']
+          obj.id = item.id
+          obj.type = 3
+          obj.groupid = this.id
+          this.$getapi('robot/manageReply',obj).then(res=>{
+            if (res.status == 200 ) {
+               this._getReply()
+              Toast.success('ok')
+            } else {
+              Toast.fail(res.msg)
+            }
+          })
+        }).catch(() => {
+          // on cancel
+        }); 
+          console.log(item.id)
+        //del 
+      }
+ 
+    },
+    updateNewText(type){
+      //type 0:edit  1:run
+      console.log(type)
+      if (type == 0 ) {
+        this.textDisabled= !this.textDisabled
+        if (this.textDisabled) {
+          // 禁止状态下
+          let obj = {}
+          obj.Uin = localStorage['_stock_Uin']
+          obj.groupid = this.id
+          obj.content = this.newText
+          obj.type = 2
+          this.$getapi('robot/manageNewreply',obj).then(res=>{
+            if (res.status == 200 ) {
+        
+              Toast.success('更新成功！')
+            } else {
+              Toast.fail(res.msg)
+            }
+          }) 
+          }
+      
+  
+      } else {
+          //update set no work
+      let obj = {}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.groupid = this.id
+      obj.type = 3
+      obj.replytype = 10
+      this.$getapi('robot/manageNewreply',obj).then(res=>{
+        if (res.status == 200 ) {
+          this.newText = ''
+          Toast.success('删除成功！')
+
+        } else {
+          Toast.fail(res.msg)
+        }
+      }) 
+      }
+    
+
+    },
     saveNew(){
       this.showAdd = false
     },
-    del(){
-
+    _delkey(item){
+     Dialog.confirm({
+        title: '提示',
+        message: '确定删除'
+      }).then(() => {
+        console.log(item)
+        // on confirm
+      }).catch(() => {
+        // on cancel
+      });   
     },
     goback(){
       this.$router.back(-1)
@@ -174,7 +403,7 @@ export default {
    
   },
   mounted () {
-
+ 
   },
   components: {
     

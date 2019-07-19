@@ -12,8 +12,18 @@ export function getData(url, data) {
       return Promise.resolve(res.data)
     })
 }
-export function getUrl() {
+export function getdevUrl() {
   return 'http://devapi.ezoonet.com/cleanstock/'
+}
+
+export function getUrl() {
+  return 'http://api.ezoonet.com/wxhelper/'
+}
+
+function getdev(urls, obj) {
+  const url = getdevUrl() + urls
+  const data = obj
+  return getData(url, data)
 }
 
 function get(urls, obj) {
@@ -21,8 +31,21 @@ function get(urls, obj) {
   const data = obj
   return getData(url, data)
 }
+ 
+export function getdevapi(api,obj) {
+  return getdev(api, obj)
+}
 
-// 登录
-export function login(obj) {
-  return get('user/login', obj)
+export function getapi(api,obj) {
+  return get(api, obj)
+}
+
+export function uploadImgs(obj) {
+	let config = {
+        headers:{'Content-Type':'multipart/form-data'}
+      }; //添加请求头
+  const url = getUrl() + 'upload/upload'
+  return axios.post(url, obj,config).then((res) => {
+    return Promise.resolve(res.data)
+  })
 }

@@ -11,14 +11,14 @@
     <div class="body">
       <van-tabs v-model="active">
         <van-tab title="群成员">
-          <form action="/">
+          <form action="/"> 
             <van-search
               v-model="value"
               placeholder="请输入群成员名称"
               show-action
-              @search=""
-              @cancel=""
-            />
+              @cancel="_cancel">
+              <div slot="action" @click="_search">搜索</div>
+           </van-search>
           </form>
         <p>启用批量踢人功能需将管理员转让给机器人或将机器人设置为微信群管理员</p>
         <div class= "radiobox">
@@ -28,12 +28,12 @@
             <van-checkbox
               v-for="(item, index) in lists"
               :key="index"
-              :name="item.name"
+              :name="item"
             >
-              复选框 {{ item.name }}
+             {{ item.NickName }}
             </van-checkbox>
           </van-checkbox-group>
-          <van-button type="primary" plain size="normal" @click="">批量踢人</van-button>
+          <van-button type="primary" plain size="normal" @click="_kick">批量踢人</van-button>
 
         </div> 
 
@@ -49,15 +49,15 @@
 </template>
 
 <script>
-import { Toast } from 'vant';
+import { Toast,Dialog } from 'vant';
 import { login} from '@/api/api'
 export default {
   data() {
       return {
-        id:this.$route.params.id,
+ 
         value:'',
         active:0,
-        result: ['a', 'b'],
+        result: [],
         radio:0,
         lists:[{
           name:'sfsdfs',
@@ -76,9 +76,56 @@ export default {
       }
     },
   created(){
-    
+    this.getGroupList()
   },
   methods: {
+    getGroupList(){
+      let obj ={}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.type = 0
+      obj.groupid = this.$route.params.id
+      this.$getapi('robot/manageGroup',obj).then(res=>{
+        if (res.status == 200 ) {
+          this.lists = res.data
+        } else {
+          Toast.fail(res.msg)
+        }
+      })
+    },
+    _kick(){
+      if (this.result.length ==0 ) return
+      Dialog.confirm({
+      title: '提示',
+      message: '确定踢人'
+    }).then(() => {
+      // on confirm
+           console.log(this.result)
+    }).catch(() => {
+      // on cancel
+    });
+ 
+    },
+    _cancel(){
+      // to do 
+      // query data
+    },
+    _search(){
+      if (this.value == '') {
+         this.getGroupList()
+         return
+      }
+      let tlist = []
+      console.log(this.value)
+      this.lists.forEach(v=>{
+        console.log(v.name)
+        if (v.NickName.indexOf(this.value) !=-1) {
+          tlist.push(v)
+        }
+      })
+      if (tlist.length>0) {
+        this.lists = tlist
+      }
+    },
     goback(){
       this.$router.back(-1)
     },

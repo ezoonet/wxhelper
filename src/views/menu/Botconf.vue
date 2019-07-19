@@ -6,18 +6,20 @@
         fixed
         left-arrow
         />
-    </div>
+    </div> 
    <div class="step0" v-if="step==0">
       <van-row type="flex" justify="space-around" style="align-items: center;  ">
         <van-col span="4">机器人</van-col>
-        <van-col span="16"><van-field v-model="namevalue" placeholder="请输入名称" /></van-col>
-        <van-col span="2"><van-icon name="question-o" /></van-col>
+        <van-col span="16"><van-field v-model="namevalue" disabled placeholder="请创建机器人" /></van-col>
+        <van-col span="2" @click.native="showHelp=true"><van-icon name="question-o" /></van-col>
+         <van-button type="primary" size="mini" style="margin-left:10px" :disabled = "Uinfo==''?false:true" @click="createrb">创建</van-button>
       </van-row>
-      <div class="step0-card">
+
+      <div class="step0-card" v-if="Uinfo"> 
         <van-row type="flex" justify="space-between" style="align-items: center; ">
-          <van-col span="6"> <img src="https://img.yzcdn.cn/vant/logo.png" ></van-col>
+          <van-col span="6"> <img :src="'https://wx.qq.com'+ Uinfo.HeadImgUrl" ></van-col>
           <van-col span="15" style="padding-left:20px;text-align: left;">
-            <p>机器人：dsfsf</p>
+            <p>机器人：{{Uinfo.NickName}}</p>
             <p>状态：在线</p>
             <p><van-button plain type="primary" @click="switchrb" size="small">更换机器人</van-button>
             <van-button plain type="primary" size="small" @click="reset">重启机器人</van-button></p>
@@ -25,11 +27,18 @@
         <van-col span="2" @click.native="del"> ✖️ </van-col>
         </van-row>
       </div>
-      <van-button type="primary" size="large" style="margin-top:30px" @click="createrb">创建</van-button>
+     
+      <div class = "group-box">
+         <van-button plain type="primary" size="small" @click="gourl('/add')">添加微信群</van-button></p>
+     
+      </div>
    </div>
 
    <div class="step1" v-if="step==1">
     <div class="step1-title">创建机器人</div>
+    <div class="qrimg">
+      <img :src="qrimg" >
+    </div>
     <div class="step1-content">
       <p>两步即可完成创建机器人：</p>
       <ul>
@@ -52,7 +61,7 @@
 
 
    <div class="step2" v-if="step==2">
-    <img src = "https://img.yzcdn.cn/vant/logo.png"> 
+    <img :src = "qrimg"> 
     <p> 用机器人的微信号扫描上方二维码（长按识别无效），重新登陆机器人</p>
    </div>
 
@@ -76,27 +85,84 @@
      <span>注意：更换机器人可能会造成数据，服务异常，请谨慎操作，若无法完成操作，可<span style="color:green">点击联系客服</span></span>
    </div>
 
+
+ <van-popup v-model="showHelp">
+    <div class= "showbox">
+    <h4>重要提醒</h4>
+    <p>扫码所使用的微信账号已经成为机器人账号，在服务期间不能再电脑上登陆微信，且不能在手机版微信登出，否则服务将掉线</p>
+    <p>为保证机器人长期稳定在线，强烈建议您使用微信小号创建机器人并管理群</p>
+    <p>机器人所有功能异常，都可以采取手动掉线，然后重新登陆的方式解决</p>
+    <p>机器人掉线期间，机器人无法服务，请及时重新登陆</p>
+    </div>
+ </van-popup>
+
   </div>
 </template>
 
 <script>
 import { Toast,Field ,Dialog} from 'vant';
-import { login} from '@/api/api'
 export default {
   data() {
       return {
-        step:2,
+        timer:'',
+        Uinfo:'',
+        showHelp:false,
+        step:0, // 0 入口。1:创建机器人。2:重登机器人。3.更换机器人
+        qrimg:'https://img.yzcdn.cn/vant/logo.png',
         namevalue:'',
         username: '',
         password: '',
       }
     },
   created(){
-    
+    this.getrebot()
   },
   methods: {
+    getrebot(){
+      if (localStorage['_stock_uid'] ) {
+        let obj = {}
+        obj.uid = localStorage['_stock_uid'] 
+        obj.type = 0
+        this.$getapi('robot/dorobot',obj).then(res=>{
+          if (res.status === 200) {
+           localStorage['_stock_Uin'] = res.data.Uin
+           this.Uinfo = res.data
+           this.namevalue = '[在线]' + res.data.NickName
+          } else {
+           
+          }
+        })
+      }
+    },
+    checkLogin(){
+      let obj = {}
+      obj.uid =  localStorage['_stock_uid']
+      obj.type = 0
+      this.$getapi('robot/doRobot',obj).then(res=>{
+          if (res.status == 200 ) {
+            this.step = 0
+            localStorage['_stock_Uin'] = res.data.Uin
+            this.getrebot()
+            clearInterval(this.timer);
+          }
+      })
+      //clearInterval(this.timer);
+    },
+    //创建机器人
     createrb(){
       this.step = 1
+      let obj ={}
+      obj.uid = localStorage['_stock_uid']
+      obj.type = 1
+      this.qrimg = ''
+      this.$getapi('robot/dorobot',obj).then(res=>{
+            if (res.status == 200 ) {
+              this.qrimg = res.data
+              this.timer = setInterval(this.checkLogin, 2000);
+            } else {
+              Toast.fail(res.msg)
+            }
+          })
     },
     switchrb(){
       this.step = 3
@@ -106,6 +172,20 @@ export default {
         title: '确定删除',
         message: '删除机器人后，您将自动放弃该机器人所有使用权，机器人和群数据也将被清除，确定删除机器人？'
       }).then(() => {
+        localStorage.removeItem('_stock_Uin')
+        let obj = {}
+        obj.Uid =  localStorage['_stock_Uin']
+        obj.type = 3
+        this.$getapi('robot/doRobot',obj).then(res=>{
+            if (res.status == 200 ) {
+           
+              Toast.success('成功')
+
+            } else {
+              Toast.fail(res.msg)
+            }
+        })
+       this.getrebot()
         // on confirm
       }).catch(() => {
         // on cancel
@@ -116,7 +196,31 @@ export default {
         title: '确定重启',
         message: '重启机器人需要用机器人微信号 扫码/确认登陆，若重启失败，将影响机器人的所有功能正常使用，确定重启机器人吗？'
       }).then(() => {
-          this.step = 2
+          let obj = {}
+          obj.Uin =  localStorage['_stock_Uin']
+          obj.type = 3
+          this.$getapi('robot/doRobot',obj).then(res=>{
+              if (res.status == 200 ) {
+                localStorage.removeItem('_stock_Uin')
+                this.step = 2
+                let obj ={}
+                obj.uid = localStorage['_stock_uid']
+                obj.type = 1
+                this.qrimg = ''
+                this.$getapi('robot/dorobot',obj).then(res=>{
+                if (res.status == 200 ) {
+                  this.qrimg = res.data
+                  this.timer = setInterval(this.checkLogin, 2000);
+                } else {
+                  Toast.fail(res.msg)
+                }
+              })
+
+              } else {
+                Toast.fail(res.msg)
+              }
+          })
+          
         // on confirm
       }).catch(() => {
       
@@ -133,11 +237,12 @@ export default {
          this.$router.back(-1)
          break;
         case 1:
-          this.step = 0
         case 2:
-          this.step = 0
         case 3:
           this.step = 0
+          this.getrebot()
+          clearInterval(this.timer);
+          break
       }
        
     },
@@ -148,6 +253,9 @@ export default {
         })
     },
    
+  },
+  beforeDestroy() {
+    clearInterval(this.timer);
   },
   mounted () {
 
@@ -181,6 +289,10 @@ export default {
       .step1-title
         color:green
         padding-bottom:20px
+      .qrimg
+        text-align:center
+        img
+          width:150px
       .step1-alert
         padding-top: 15px 
         color:orange
@@ -188,7 +300,7 @@ export default {
       font-size:14px
       padding:15px
       img
-        width:100px
+        width:150px
     .step3
       font-size:12px
       padding:15px
@@ -198,7 +310,13 @@ export default {
         margin-bottom:25px
       ul
         margin:25px 0 25px 0 
-
-
+    .van-popup
+      width:90%
+      .showbox
+        padding:5px 40px 5px 40px
+        text-align:left
+  .group-box
+    padding:15px
+    text-align:left
 
 </style>

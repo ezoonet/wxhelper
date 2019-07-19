@@ -150,6 +150,7 @@ import { login} from '@/api/api'
 export default {
   data() {
       return {
+        result:[],
         currentDate: new Date(),
         periodWeek:['星期一','星期二','星期三','星期四','星期五','星期六','星期日'],
         radioPeriod:0,
@@ -196,6 +197,12 @@ export default {
     },
   created(){
     console.log(this.id)
+    if (!localStorage['_stock_Uin']) {
+      Toast.fail('请先登陆机器人')
+      this.$router.back(-1)
+      return
+
+    }
   },
   methods: {
      onLoad() {

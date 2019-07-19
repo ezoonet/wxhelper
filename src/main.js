@@ -6,6 +6,12 @@ import router from './router'
 import Vant from 'vant'
 import 'vant/lib/index.css'
 import VueLazyload from 'vue-lazyload'
+import {getapi,getdevapi} from '@/api/api'
+ 
+ 
+
+Vue.prototype.$getapi= getapi
+Vue.prototype.$getdevapi= getdevapi
 
 Vue.config.productionTip = false
 Vue.use(Vant)

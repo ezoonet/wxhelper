@@ -45,11 +45,27 @@ export default {
     
   },
   methods: {
+    
     goback(){
       this.$router.back(-1)
     },
     submit(){
-
+      if (this.message == '') {
+        Toast.fail('不能为空')
+        return
+      }
+      let obj ={}
+      obj.uid = localStorage['_stock_uid']
+      obj.type = 1
+      obj.content = this.message
+      this.$getapi('other/manageSuggess',obj).then(res=>{
+        if (res.status == 200 ) {
+          Toast.success('提交成功，谢谢您的反馈')
+          this.message = ''
+        } else {
+          Toast.fail(res.msg)
+        }
+      })
     },
     gourl(url){
       console.log(url)

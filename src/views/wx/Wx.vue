@@ -77,14 +77,16 @@
             show-action
             shape="round"
             @search="onSearch"
+   
           >
             <div slot="action" @click="onSearch">搜索</div>
           </van-search>
         </div>
         <div class = "group-list" >
 
-          <van-collapse v-model="activeName" accordion>
-            <van-collapse-item :title="item.name" :name="item.id"  v-for="(item,i) in groupList" :key = i>
+          <van-collapse v-model="activeName" accordion v-if="groupList.length>0">
+
+            <van-collapse-item :title="item.Nickname" :name="item.id"  v-for="(item,i) in groupList" :key = i>
               <div>
                 <van-grid :column-num="2">
                   <van-grid-item
@@ -111,6 +113,7 @@
             </div>
             </van-collapse-item>
           </van-collapse>
+          <div style="text-align: center;padding:20px 0 " v-else>请先配置机器人</div>
         </div>
 
         <div class="button-box">
@@ -129,33 +132,70 @@ export default {
         showHelp:false,
         showPop:false,
         value: '',
-        activeName: '',
-        groupList:[{
-          id:0,
-          name:'名称1'
-        },{
-          id:1,
-          name:'名称2'
-        }]
+        activeName: '0',
+        serverList:[],
+        groupList:[]
       }
     },
   created(){
-    
+    // this.groupList = this.serverList
+    if (!localStorage['_stock_Uin']) {
+      Dialog.confirm({
+        title: '提示',
+        message: '您尚未登陆机器人，前往登陆？'
+      }).then(() => {
+        this.gourl('/botconf')
+        // on confirm
+      }).catch(() => {
+        // on cancel
+      });
+      
+    } else {
+       this._getGroupList()
+    }
+
   },
   methods: {
-
+    _getGroupList(){
+      let obj ={}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.type = 0
+      obj.inManage = 1
+      this.$getapi('robot/dogroup',obj).then(res=>{
+            if (res.status == 200 ) {
+              this.groupList = res.data
+            } else {
+              Toast.fail(res.msg)
+            }
+          })
+    },
     logout(){
       Dialog.confirm({
         title: '提示',
         message: '退出登录将无法使用机器人，无法使用群管理功能，是否确定退出？'
       }).then(() => {
+        localStorage.clear()
+        this.gourl('/')
         // on confirm
       }).catch(() => {
         // on cancel
       });
     },
-    onSearch(){
 
+    onSearch(){
+      if (this.value == '') {
+         this.groupList = this.serverList
+      } else {
+        let tlist = []
+        this.serverList.forEach(v=>{
+          console.log(v.name)
+          if (v.name.indexOf(this.value) !=-1) {
+            tlist.push(v)
+          }
+        })
+        if (tlist.length >0 ) this.groupList = tlist
+      }
+     
     },
     gourl(url){
       this.$router.push({

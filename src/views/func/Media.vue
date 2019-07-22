@@ -12,8 +12,62 @@
         <van-tabs v-model="active">
           <van-tab title="文字">
             <div class="text-box">
+
+
+              <van-collapse v-model="activeName" accordion v-if="textList.length>0"  >
+              <van-collapse-item v-for="(item,i) in textList" :key=i :title="item.name" :name="item.id">
+            
+                  <div slot="title" justify="space-between" class="meida-list-box">  
+                    <van-row type="flex" style="text-align: left;">
+                      <van-col span="20" style="margin-left:20px">  {{item.name}} </van-col>
+                      <van-col span="2">  
+                        <van-icon
+                        @click="goedit(item)"
+                        name="edit"
+                         >
+                      </van-icon></van-col>
+                      <van-col span="2"> 
+                         <van-icon
+                        @click.native="_del(item)"
+                       
+                        name="delete"
+                       >
+                      </van-icon>
+                    </van-col>
+                    </van-row>
+
+                  </div>
+                  {{item.content}}
+              </van-collapse-item>
+  
+            </van-collapse>
+            <div style="margin:30px" v-else>暂无数据</div>
+             <div class="text-edit-box" v-if="showEdit">
+                        <van-cell-group>
+                            <van-field
+                              v-model="textName"
+                              label="文本名称"
+                              type="textarea"
+                              placeholder="请输入文本名称"
+                              rows="1"
+                            />
+                          </van-cell-group>
+                    
+                       <van-cell-group>
+                            <van-field
+                              v-model="textContent"
+                              label="文本内容"
+                              type="textarea"
+                              placeholder="请输入文本内容"
+                              rows="5"
+                            />
+                          </van-cell-group>
+                           <van-button style="margin-right:50px;" type="primary" plain  @click="_save()">保存</van-button> 
+                           <van-button type="default" plain  @click="showEdit=false;showAddButton=true">取消</van-button> 
+              </div>
+
               <!-- 列表部分 -->
-              <van-cell-group v-if="textList.length>0">
+            <!--   <van-cell-group v-if="textList.length>0">
                   <van-cell   value="" v-for="(item,i) in textList" :key=i>
                     <template slot="title" >
                       <span class="custom-title">{{item.name}}</span>
@@ -32,7 +86,8 @@
                       </van-icon>
    
                    </van-cell>
-                    <!-- 编辑部分 -->
+
+                
                     <div class="text-edit-box" v-if="showEdit">
                         <van-cell-group>
                             <van-field
@@ -58,11 +113,12 @@
                       </div>
                 </van-cell-group >    
                  <van-cell-group v-else>
-                  暂无数据
-                 </van-cell-group>    
+                  <div style="padding:30px"> 暂无数据</div>
+                 
+                 </van-cell-group>     -->
                   
 
-              <van-button v-if="showAddButton" type="primary" plain size="large" @click="_add">新增文本素材</van-button> 
+              <van-button style="margin-top:20px" v-if="showAddButton" type="primary" plain size="large" @click="_add">新增文本素材</van-button> 
             </div>
 
         
@@ -104,31 +160,11 @@ import { uploadImgs} from '@/api/api'
 export default {
   data() {
       return {
+        activeName:'',
         type:0,
         editId:0,
         showAddButton:true,
-        imgList:[{
-          id:0,
-          imgUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg'
-        },{
-          id:1,
-          imgUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg'
-        },{
-          id:2,
-          imgUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg'
-        },{
-          id:3,
-          imgUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg'
-        },{
-          id:4,
-          imgUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg'
-        },{
-          id:5,
-          imgUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg'
-        },{
-          id:6,
-          imgUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg'
-        }
+        imgList:[
       
         ],
         fileList:[],
@@ -138,24 +174,7 @@ export default {
         textContent:'',
         textId:0,
         mediaList:[],
-        textList:[{
-          id:0,
-          name:'dsfdf',
-          content:'sdfsdsf'
-        },{
-          id:1,
-          name:'dsfdf2',
-          content:'sdfsdsf2'
-        },{
-          id:2,
-          name:'dsfdf3',
-          content:'sdfsdsf3'
-        },{
-          id:3,
-          name:'dsfdf3',
-          content:'sdfsds33f'
-        }
-
+        textList:[ 
         ],
         active:0,
   
@@ -199,7 +218,7 @@ export default {
       this.$getapi('robot/manageMedia',obj).then(res=>{
         if (res.status==200) {
           Toast.success('成功')
-      
+          this.showEdit = false
  
           this._getMediaList()
         } else {
@@ -288,6 +307,7 @@ export default {
           this.$getapi('robot/manageMedia',obj).then(res=>{
             if (res.status==200) {
               Toast.success('删除成功')
+              this.showEdit = false
               this._getMediaList()
             } else {
               Toast.fail(res.msg)
@@ -342,10 +362,13 @@ export default {
       padding:15px
       font-size:14px
       .text-edit-box
+        z-index:10000
         background:#fff
     .pic-box
       text-align:left
     .pic-list
       span
         margin-top:15px
+ 
+
 </style>

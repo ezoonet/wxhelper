@@ -92,8 +92,8 @@ export default {
       obj.mobile = this.username
       obj.code = this.password
       obj.invite_code = ''
-      this.$getdevapi('user/login',obj).then(res=>{
-        if (res.code === 200) {
+      this.$getapi('user/login',obj).then(res=>{
+        if (res.status === 200) {
           localStorage['_stock_token'] = res.data.token
           localStorage['_stock_uid'] = res.data.uid 
           Toast.success('登陆成功！')

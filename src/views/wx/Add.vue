@@ -21,7 +21,7 @@
         <van-checkbox
           v-for="(item, index) in list"
           :key="index"
-          :name="item.id"
+          :name="item.UserName"
         >
            {{ item.Nickname }}
         </van-checkbox>
@@ -48,7 +48,10 @@
       <ul>
         <li>1.首先将机器人拉到需要管理的群里。</li>
         <li>2.然后在群里任意发布一条消息，再点击刷新重试</li>
+        <li>3.注意刷新后，请重新管理需要管理的群</li>        
       </ul>
+       <van-button style="margin-top:25px" type="primary" plain size="large" @click="sendcmd()">刷新重试</van-button>
+  
     </van-popup>
   </div>
   </div>
@@ -82,7 +85,8 @@ export default {
         let obj ={}
         obj.Uin = localStorage['_stock_Uin']
         obj.type = 2
-        obj.idList = this.result
+        obj.UserNameList = this.result
+    
         this.$getapi('robot/dogroup',obj).then(res=>{
           if (res.status==200) {
             Toast.success('成功')
@@ -95,6 +99,8 @@ export default {
       let obj ={}
       obj.Uin = localStorage['_stock_Uin']
       obj.type = 0
+      this.list = []
+
       this.$getapi('robot/dogroup',obj).then(res=>{
             if (res.status == 200 ) {
               this.list = res.data
@@ -113,7 +119,7 @@ export default {
       if (this.result.length==0) {
         this.result =[]
         this.list.forEach(v=>{
-         this.result.push(v.id)
+         this.result.push(v.UserName)
         })
         this.radio= '1'
       } else {
@@ -130,9 +136,39 @@ export default {
  
       this._setGroupInManage()
     },
+    sendcmd(){
+      let obj = {}
+      obj.code = 6
+      obj.Uin = localStorage['_stock_Uin']
+      obj.content = ''
+      obj.UserName = ''
+      this.$getapi('robot/sendcmd',obj).then(res=>{
+        if (res.status == 200) {
+          const toast = Toast.loading({
+            duration: 0,       // 持续展示 toast
+            forbidClick: true, // 禁用背景点击
+            loadingType: 'spinner',
+            message: '请等待 5 秒'
+          });
+
+          let second = 5;
+          const timer = setInterval(() => {
+            second--;
+            if (second) {
+              toast.message = `请等待 ${second} 秒`;
+            } else {
+              clearInterval(timer);
+              Toast.clear();
+            }
+          }, 1000);
+        }
+
+      })
+ 
+    },
     refresh(){
-      console.log('refresh')
-      this._getGroupList()
+      this._getGroupList() 
+      
     },
     _search(){
       if (this.value== '') {

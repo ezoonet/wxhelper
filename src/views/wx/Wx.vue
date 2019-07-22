@@ -163,7 +163,8 @@ export default {
       obj.inManage = 1
       this.$getapi('robot/dogroup',obj).then(res=>{
             if (res.status == 200 ) {
-              this.groupList = res.data
+              this.serverList = res.data
+              this.groupList = this.serverList
             } else {
               Toast.fail(res.msg)
             }
@@ -184,12 +185,12 @@ export default {
 
     onSearch(){
       if (this.value == '') {
-         this.groupList = this.serverList
+          this.groupList = this.serverList
       } else {
         let tlist = []
         this.serverList.forEach(v=>{
-          console.log(v.name)
-          if (v.name.indexOf(this.value) !=-1) {
+     
+          if (v.Nickname.indexOf(this.value) !=-1) {
             tlist.push(v)
           }
         })

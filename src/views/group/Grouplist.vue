@@ -10,14 +10,17 @@
     </div>
     <div class="body">
       <van-tabs v-model="active">
-        <van-tab title="群成员">
-          <form action="/"> 
+        <van-tab title="群成员" >
             <van-search
               v-model="value"
               placeholder="请输入群成员名称"
               show-action
               @cancel="_cancel">
-              <div slot="action" @click="_search">搜索</div>
+          
+              <div slot="action" >
+             
+                <span @click="_search">搜索</span>             
+            </div>
            </van-search>
           </form>
         <p>启用批量踢人功能需将管理员转让给机器人或将机器人设置为微信群管理员</p>
@@ -86,6 +89,7 @@ export default {
       obj.groupid = this.$route.params.id
       this.$getapi('robot/manageGroup',obj).then(res=>{
         if (res.status == 200 ) {
+
           this.lists = res.data
         } else {
           Toast.fail(res.msg)
@@ -108,6 +112,9 @@ export default {
     _cancel(){
       // to do 
       // query data
+    },
+    _refresh(){
+      
     },
     _search(){
       if (this.value == '') {
@@ -152,7 +159,6 @@ export default {
     position:absolute
     width:100%
     height:100%
-    background:#eee
     .nav
       background: green
     .body

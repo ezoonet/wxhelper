@@ -72,7 +72,10 @@
              </van-cell-group>
              <van-cell-group>
                <h4>群发内容</h4>
-               <div class="groupadd-box-button">+ 添加</div> 
+               <div>
+                 {{choiceMedia.name}}
+               </div>
+               <div class="groupadd-box-button" @click="showMedia=true">+ 添加</div> 
              </van-cell-group>
             <van-cell-group >
                <h4> 选择要群发的群</h4>
@@ -80,9 +83,9 @@
                 <van-checkbox
                   v-for="(item, index) in grouplist"
                   :key="index"
-                  :name="item.name"
+                  :name="item.UserName"
                 >
-                   {{ item.name }}
+                   {{ item.Nickname }}
                 </van-checkbox>
               </van-checkbox-group>
              </van-cell-group>
@@ -92,7 +95,7 @@
                 <van-radio name="1">不重复</van-radio>
                 <van-radio name="2">周期重复</van-radio>
               </van-radio-group>
-            <van-checkbox-group v-model="result" style="margin-top:25px;display:flex; flex-wrap: wrap;" >
+            <van-checkbox-group v-model="periodresult" style="margin-top:25px;display:flex; flex-wrap: wrap;" >
               <van-checkbox
                 v-for="(item, index) in periodWeek"
                 :key="index"
@@ -107,7 +110,7 @@
               <h4> 发送时间：</h4>
              <label>小提示：请确保每天进行群发的数量不超过20词（包括重复的群发），否则腾讯有封号风险</label>
              <div class="group-sendbutton">
-              <van-button type="primary" plain size="small" @click="">提交</van-button>
+              <van-button type="primary" plain size="small" @click="summit">提交</van-button>
               <van-button  plain size="small" @click="">取消</van-button>
             </div>
             </van-checkbox-group>
@@ -138,6 +141,26 @@
    </div>
  
 
+<van-popup v-model="showMedia" style="width:80%;height:60%;padding:20px;">
+  <van-tabs v-model="mediaActive" style="    padding-left: 10%;">
+      <van-tab title="文本" >
+         <van-radio-group v-model="mediaradio">
+          <van-radio :name="item.id" v-for="(item,i) in mediatextList" :key="i">
+          {{item.name}}
+        </van-radio>
+        </van-radio-group>
+      </van-tab>
+      <van-tab title="图片" >
+        <van-radio-group v-model="mediaradio" >
+          <van-radio :name="item.id" v-for="(item,i) in mediapicList" :key="i">
+          <img style="width:150px;" :src="item.content" >
+   
+        </van-radio>
+        </van-radio-group>
+      </van-tab>
+    </van-tabs>
+    <van-button  style="position: fixed;margin-left:-50px;width:100px;bottom:20px" type="primary" plain size="small" @click="_choiceMedia()">确定</van-button>
+</van-popup>
 
  
     </div>
@@ -150,23 +173,22 @@ import { login} from '@/api/api'
 export default {
   data() {
       return {
-        result:[],
+        choiceMedia:'',
+        mediaActive:0,
+        mediaradio:'0',
+        mediatextList: [
+        ],
+        mediaList:[],
+        mediapicList:[],
+        showMedia:false,
+        periodresult:[],
         currentDate: new Date(),
         periodWeek:['星期一','星期二','星期三','星期四','星期五','星期六','星期日'],
         radioPeriod:0,
         groupChoiced:[],
         newTitle:'',
         showGroupAdd:false,
-        grouplist:[{
-          name:'dsfsf',
-          id:0
-        },{
-          name:'dsfsf1',
-          id:1
-        },{
-          name:'dsfsf2',
-          id:2
-        }],
+        grouplist:[],
         loading:false,
         finished:false,
         imgList:[
@@ -196,6 +218,7 @@ export default {
       }
     },
   created(){
+
     console.log(this.id)
     if (!localStorage['_stock_Uin']) {
       Toast.fail('请先登陆机器人')
@@ -203,9 +226,81 @@ export default {
       return
 
     }
+    this.getMdeia()
+    this._getGroupList()
   },
   methods: {
-     onLoad() {
+    summit(){
+      if (!this.newTitle) {
+        Toast.fail('请输入标题')
+        return
+      }
+      if (!this.choiceMedia) {
+        Toast.fail('请选择素材')
+        return
+      }
+      if (this.groupChoiced.length==0) {
+        Toast.fail('请选择要群发的群')
+        return
+      }   
+      if (!this.radioPeriod) {
+        Toast.fail('请选择发送周期')
+        return
+      }   
+ 
+      if (this.radioPeriod==2 && this.periodresult.length ==0) {
+        Toast.fail('请选择发送时间')
+        return
+      }       
+    },
+    _getGroupList(){
+      let obj ={}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.type = 0
+      this.list = []
+
+      this.$getapi('robot/dogroup',obj).then(res=>{
+            if (res.status == 200 ) {
+              this.grouplist = res.data
+            } else {
+              Toast.fail(res.msg)
+            }
+          })
+    },
+    _choiceMedia(){
+      console.log(this.mediaradio)
+      this.showMedia = false
+      this.mediaList.forEach(v=>{
+        if (v.id == this.mediaradio) {
+          this.choiceMedia = v
+          return
+        }
+      })
+
+    },
+    getMdeia(){
+      let obj ={}
+      obj.type =0
+      obj.uid = localStorage['_stock_uid']
+      this.$getapi('robot/manageMedia',obj).then(res=>{
+            if (res.status == 200 ) {
+              this.meidatextList = []
+              this.mediapicList = []
+              this.mediaList = res.data
+              res.data.forEach(v=>{
+                if (v.type ==0 ){
+                  this.mediatextList.push(v)
+                } else {
+                  this.mediapicList.push(v)
+                }
+              })
+               
+            } else {
+              Toast.fail(res.msg)
+            }
+          })
+    },
+    onLoad() {
       // 异步更新数据
       setTimeout(() => {
         for (let i = 0; i < 10; i++) {

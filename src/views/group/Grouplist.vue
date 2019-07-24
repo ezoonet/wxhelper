@@ -62,13 +62,7 @@ export default {
         active:0,
         result: [],
         radio:0,
-        lists:[{
-          name:'sfsdfs',
-          id:1
-        },{
-          name:'sdfsdfsdf',
-          id:2
-        }
+        lists:[
         ],
         icon: {
           active: 'https://img.yzcdn.cn/vant/user-active.png',
@@ -87,7 +81,13 @@ export default {
       obj.Uin = localStorage['_stock_Uin']
       obj.type = 0
       obj.groupid = this.$route.params.id
+       const toast = Toast.loading({
+            duration: 0,       // 持续展示 toast
+            forbidClick: true, // 禁用背景点击
+            message: '加载中'
+        });
       this.$getapi('robot/manageGroup',obj).then(res=>{
+        toast.clear()
         if (res.status == 200 ) {
 
           this.lists = res.data
@@ -103,7 +103,24 @@ export default {
       message: '确定踢人'
     }).then(() => {
       // on confirm
-           console.log(this.result)
+            console.log(this.result)
+            let obj ={}
+            obj.type = 1
+            obj.groupid = this.$route.params.id
+            obj.msg =  this.result
+             const toast = Toast.loading({
+                  duration: 0,       // 持续展示 toast
+                  forbidClick: true, // 禁用背景点击
+                  message: '加载中'
+              });
+            this.$getapi('robot/manageGroup',obj).then(res=>{
+              toast.clear()
+              if (res.status == 200 ) {
+                
+              } else {
+                Toast.fail(res.msg)
+              }
+            })
     }).catch(() => {
       // on cancel
     });

@@ -156,13 +156,23 @@ export default {
       obj.type = 1
       this.qrimg = ''
       this.$getapi('robot/dorobot',obj).then(res=>{
-            if (res.status == 200 ) {
+            // if (res.status == 200 ) {
+            //   this.qrimg = res.data
+            //   this.timer = setInterval(this.checkLogin, 2000);
+            // } else {
+            //   Toast.fail(res.msg)
+            // }
+          })
+      obj.uid = localStorage['_stock_uid']
+      obj.type = 11
+      this.$getapi('robot/dorobot',obj).then(res=>{
+         if (res.status == 200 ) {
               this.qrimg = res.data
-              this.timer = setInterval(this.checkLogin, 2000);
+              this.timer = setInterval(this.checkLogin, 1000);
             } else {
               Toast.fail(res.msg)
             }
-          })
+      })
     },
     switchrb(){
       this.step = 3
@@ -172,13 +182,14 @@ export default {
         title: '确定删除',
         message: '删除机器人后，您将自动放弃该机器人所有使用权，机器人和群数据也将被清除，确定删除机器人？'
       }).then(() => {
-        localStorage.removeItem('_stock_Uin')
+
         let obj = {}
-        obj.Uid =  localStorage['_stock_Uin']
+        obj.Uin =  localStorage['_stock_Uin']
         obj.type = 3
         this.$getapi('robot/doRobot',obj).then(res=>{
             if (res.status == 200 ) {
-           
+              localStorage.removeItem('_stock_Uin')
+              this.gourl('/')
               Toast.success('成功')
 
             } else {
@@ -209,13 +220,19 @@ export default {
                 this.qrimg = ''
                 this.$getapi('robot/dorobot',obj).then(res=>{
                 if (res.status == 200 ) {
-                  this.qrimg = res.data
-                  this.timer = setInterval(this.checkLogin, 2000);
                 } else {
                   Toast.fail(res.msg)
                 }
               })
-
+              obj.type = 11
+              this.$getapi('robot/dorobot',obj).then(res=>{
+                 if (res.status == 200 ) {
+                      this.qrimg = res.data
+                      this.timer = setInterval(this.checkLogin, 1000);
+                    } else {
+                      Toast.fail(res.msg)
+                    }
+              })
               } else {
                 Toast.fail(res.msg)
               }

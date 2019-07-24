@@ -48,7 +48,7 @@
       <ul>
         <li>1.首先将机器人拉到需要管理的群里。</li>
         <li>2.然后在群里任意发布一条消息，再点击刷新重试</li>
-        <li>3.注意刷新后，请重新管理需要管理的群</li>        
+        <li>3.注意<span style="color:red">刷新后，请重新管理</span>需要管理的群</li>        
       </ul>
        <van-button style="margin-top:25px" type="primary" plain size="large" @click="sendcmd()">刷新重试</van-button>
   
@@ -90,6 +90,7 @@ export default {
         this.$getapi('robot/dogroup',obj).then(res=>{
           if (res.status==200) {
             Toast.success('成功')
+            this.gourl('/wx')
           } else {
             Toast.fail('无改变')
           }
@@ -135,6 +136,7 @@ export default {
       }
  
       this._setGroupInManage()
+
     },
     sendcmd(){
       let obj = {}
@@ -150,6 +152,10 @@ export default {
             loadingType: 'spinner',
             message: '请等待 5 秒'
           });
+          setTimeout(()=>{
+            this.showHelpNoFind = false
+            this._getGroupList() 
+        },5000)
 
           let second = 5;
           const timer = setInterval(() => {
@@ -161,6 +167,7 @@ export default {
               Toast.clear();
             }
           }, 1000);
+
         }
 
       })

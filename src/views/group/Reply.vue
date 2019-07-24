@@ -15,7 +15,7 @@
                   <van-cell   value="" style="    align-items: center;">
                     <template slot="title" >
                       <span class="custom-title">
-                          <van-field autofocus  v-model="newText" :disabled="textDisabled" placeholder="请输入内容" />
+                          <van-field autofocus    type="textarea"  autosize rows="3" v-model="newText" :disabled="textDisabled" placeholder="请输入内容" />
                       </span>
                     
                     </template>
@@ -28,7 +28,7 @@
                       <van-icon
                         slot="right-icon"
                         @click.native="updateNewText(1)"
-                        name="play-circle-o"
+                        name="delete"
                         style="padding-right:10px;line-height: inherit;">
                       </van-icon>
    
@@ -44,7 +44,7 @@
             <van-cell   value="" style="align-items: center;">
               <van-tag style="margin-right:5px"type="danger">{{item.type == 0?'私':item.type==1?'群':''}}</van-tag>
               <template slot="title" >
-                <span class="custom-title">  <van-field autofocus  v-model="item.keywords" :disabled="keyTextDisabled" placeholder="请输入内容" /></span>
+                <span class="custom-title">  <van-field autofocus  v-model="item.keywords" :disabled="keyTextDisabled" placeholder="请输入内容" /><span>{{item.content}}</span></span>
               
               </template>
           <!--       <van-icon
@@ -68,6 +68,9 @@
              </van-cell>
 
         </van-cell-group>
+
+
+
 
         <div class="add-reply" v-if="showReply" >
           <p style="color:green">关键词回复</p>
@@ -358,22 +361,34 @@ export default {
       
   
       } else {
-          //update set no work
-      let obj = {}
-      obj.Uin = localStorage['_stock_Uin']
-      obj.groupid = this.id
-      obj.type = 3
-      obj.replytype = 10
-      this.$getapi('robot/manageNewreply',obj).then(res=>{
-        if (res.status == 200 ) {
-          this.newText = ''
-          Toast.success('删除成功！')
+       Dialog.confirm({
+        title: '提示',
+          message: '确定删除'
+        }).then(() => {
+               //update set no work
+            let obj = {}
+            obj.Uin = localStorage['_stock_Uin']
+            obj.groupid = this.id
+            obj.type = 3
+            obj.replytype = 10
+            this.$getapi('robot/manageNewreply',obj).then(res=>{
+              if (res.status == 200 ) {
+                this.newText = ''
+                Toast.success('删除成功！')
 
-        } else {
-          Toast.fail(res.msg)
-        }
-      }) 
-      }
+              } else {
+                Toast.fail(res.msg)
+              }
+            }) 
+        
+         
+        }).catch(() => {
+          // on cancel
+        }); 
+          console.log(item.id)
+        //del 
+      } 
+      
     
 
     },

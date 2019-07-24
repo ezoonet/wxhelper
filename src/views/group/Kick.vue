@@ -14,7 +14,7 @@
         
         <p>启用批量踢人功能需将管理员转让给机器人或将机器人设置为微信群管理员</p>
         <van-cell-group>
-          <van-switch-cell v-model="autoValue" title="机器人自动踢人" />
+          <van-switch-cell v-model="autoValue" @change="setAutoKick" title="机器人自动踢人" />
         </van-cell-group>
          
         <van-cell-group>
@@ -96,9 +96,37 @@ export default {
       }
     },
   created(){
-    console.log(this.id)
+    this.getValue()
   },
   methods: {
+    getValue(){
+      let obj ={}
+      obj.uid = localStorage['_stock_uid']
+      obj.type = 0
+      obj.name = 'autoKick'
+      this.$getapi('other/manageConfig',obj).then(res=>{
+            if (res.status == 200 ) {
+               this.autoValue = res.data =='1'? true:false
+            } else {
+              Toast.fail(res.msg)
+            }
+          })
+    },
+    setAutoKick(){
+      let obj ={}
+      obj.uid = localStorage['_stock_uid']
+      obj.type = 2
+      obj.name = 'autoKick'
+   
+      obj.value = this.autoValue == true ? '1':'0'
+      this.$getapi('other/manageConfig',obj).then(res=>{
+            if (res.status == 200 ) {
+               Toas.success('ok')
+            } else {
+              Toast.fail(res.msg)
+            }
+          })
+    },
     goback(){
       this.$router.back(-1)
     },

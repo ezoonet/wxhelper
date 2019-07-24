@@ -113,11 +113,11 @@
             </div>
             </van-collapse-item>
           </van-collapse>
-          <div style="text-align: center;padding:20px 0 " v-else>请先配置机器人</div>
+         <!--  <div style="text-align: center;padding:20px 0 " v-else>请先配置机器人</div> -->
         </div>
 
         <div class="button-box">
-          <van-button type="primary" plain size="large" @click="gourl('/add')">添加微信群</van-button>
+          <van-button type="primary" plain size="large" @click="gourl('/add')">选择群管理</van-button>
         </div>
     </div>
   </div>
@@ -138,6 +138,7 @@ export default {
       }
     },
   created(){
+    this.checkOnline()
     // this.groupList = this.serverList
     if (!localStorage['_stock_Uin']) {
       Dialog.confirm({
@@ -156,6 +157,21 @@ export default {
 
   },
   methods: {
+    checkOnline(){
+      let obj={}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.type = 4 //check
+      this.$getapi('robot/dogroup',obj).then(res=>{
+          if (res.status == 200 ) {
+        
+          } else {
+            localStorage.clear()
+            Toast.fail('机器人已掉线，请重新登陆')
+            this.gourl('/')
+          }
+        })
+
+    },
     _getGroupList(){
       let obj ={}
       obj.Uin = localStorage['_stock_Uin']
@@ -166,7 +182,8 @@ export default {
               this.serverList = res.data
               this.groupList = this.serverList
             } else {
-              Toast.fail(res.msg)
+
+               Toast.fail('请先选择要管理的群')
             }
           })
     },
@@ -259,6 +276,7 @@ export default {
         font-size:12px
         li
           padding-bottom:5px
-
+  .button-box
+    margin-top:15px
       
 </style>

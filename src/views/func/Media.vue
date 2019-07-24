@@ -203,7 +203,7 @@ export default {
       if (this.type == 1) {
         // add
          obj.type = 1
-         obj.mediatype = 0
+         obj.mediatype = 1
       } 
       if (this.type == 2) {
         // edit
@@ -230,7 +230,7 @@ export default {
     _getMediaList(){
       let obj ={}
       obj.uid = localStorage['_stock_uid']
-      obj.type = 0
+      obj.type = 0 //get
 
       this.$getapi('robot/manageMedia',obj).then(res=>{
             if (res.status == 200 ) {
@@ -238,11 +238,11 @@ export default {
               this.textList=[]
               this.imgList=[]
               res.data.forEach(v=>{
-                if (v.type == 0) {
+                if (v.type == 1) {
                   //文字
                   this.textList.push(v)
                 } 
-                if (v.type == 1) {
+                if (v.type == 2) {
                   //图片
                   this.imgList.push(v)
                 }
@@ -274,7 +274,7 @@ export default {
                 obj.type = 1 //add
                 obj.name = 'img'
                 obj.content = res.data  
-                obj.mediatype = 1 //img
+                obj.mediatype = 2 //img
                 this.$getapi('robot/manageMedia',obj).then(res=>{
                   if (res.status==200) {
                     Toast.success('成功')

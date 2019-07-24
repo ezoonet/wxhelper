@@ -9,7 +9,7 @@
         />
     </div>
     <div class="body"  >
-        <van-tabs v-model="active">
+        <van-tabs v-model="active" @change="tabChanged()">
           <van-tab title="群发列表">
 
             <div class="text-box" v-if = "!showGroupAdd">
@@ -17,8 +17,10 @@
               <van-cell-group>
                   <van-cell   value="" v-for="(item,i) in textList" :key=i>
                     <template slot="title" >
-                      <span class="custom-title">{{item.name}}</span>
+                      <span class="custom-title">{{item.Nickname}}</span>
                     </template>
+                    <van-tag v-if="item.type==1" plain type="danger">文</van-tag>
+                     <van-tag v-if="item.type==2"  plain type="success">图</van-tag>
                       <van-icon
                         @click="goedit(item)"
                         slot="right-icon"
@@ -38,28 +40,49 @@
                         <van-cell-group>
                             <van-field
                               v-model="textName"
-                              label="文本名称"
+                              label="名称"
                               type="textarea"
-                              placeholder="请输入文本名称"
+                              placeholder="请输入名称"
                               rows="1"
                             />
                           </van-cell-group>
                     
                        <van-cell-group>
-                            <van-field
+                            <img v-if="typeradio==2" style="width:150px" :src = "textContent" >
+                            <van-field v-if="typeradio==1"
                               v-model="textContent"
-                              label="文本内容"
+                              label="内容"
                               type="textarea"
-                              placeholder="请输入文本内容"
+                              placeholder="请输入内容"
                               rows="5"
                             />
                           </van-cell-group>
-                           <van-button style="margin-right:50px;" type="primary" plain  @click="">保存</van-button> 
-                           <van-button type="default" plain  @click="">取消</van-button> 
+                       <van-cell-group>
+                         <van-checkbox-group v-model="preiodResult" style="display: flex; flex-wrap: wrap;">
+                            <van-checkbox style="margin-right:10px;"
+                              v-for="(item2, i) in periodWeek"
+                              :key="item2"
+                              :name="item2"
+                            >
+                              {{ item2 }}
+                            </van-checkbox>
+                          </van-checkbox-group>
+
+                       </van-cell-group>
+
+
+                 <!-- <van-radio-group style="margin-top:20px" disabled v-model="typeradio">
+                    <van-radio name="1">文字</van-radio>
+                    <van-radio name="2">图片</van-radio>
+                  </van-radio-group> -->
+
+                          <!--  <van-button style="margin-right:50px;" type="primary" plain  @click="">保存</van-button> 
+                           <van-button type="default" plain  @click="">取消</van-button>  -->
                       </div>
+
                 </van-cell-group>    
 
-
+ 
                   
 
               <van-button type="primary" plain size="large" @click="showGroupAdd=true">新增群发</van-button> 
@@ -72,8 +95,12 @@
              </van-cell-group>
              <van-cell-group>
                <h4>群发内容</h4>
-               <div>
-                 {{choiceMedia.name}}
+               <div v-if="choiceMedia.type ==1 ">
+                 {{ choiceMedia.name}}   ( {{ choiceMedia.content}})
+             
+               </div >
+               <div v-else style="text-align: center">
+                 <img style="width:150px" :src="choiceMedia.content" >
                </div>
                <div class="groupadd-box-button" @click="showMedia=true">+ 添加</div> 
              </van-cell-group>
@@ -107,15 +134,25 @@
 
            </van-cell-group>
    
-              <h4> 发送时间：</h4>
+              <h4 @click="showTimepicker=true" > 发送时间：<span style="color:red">{{sendtime==''?'请选择':sendtime}}</span></h4>
+          
+              <van-datetime-picker 
+                v-if ="showTimepicker"
+                v-model="sendtime"
+                type="time"
+                :visible-item-count= 3
+                @cancel = "showTimepicker=false;sendtime=''"
+                @confirm = "showTimepicker=false"
+              />
+
              <label>小提示：请确保每天进行群发的数量不超过20词（包括重复的群发），否则腾讯有封号风险</label>
              <div class="group-sendbutton">
               <van-button type="primary" plain size="small" @click="summit">提交</van-button>
-              <van-button  plain size="small" @click="">取消</van-button>
+              <van-button  plain size="small" @click="showGroupAdd=false">取消</van-button>
             </div>
             </van-checkbox-group>
             </div>
-      
+     
 
           </van-tab>
 
@@ -133,9 +170,11 @@
               :title="item.name"
             />
           </van-list>
-
+      
            </van-tab>
+
         </van-tabs>
+
      
 
    </div>
@@ -146,7 +185,7 @@
       <van-tab title="文本" >
          <van-radio-group v-model="mediaradio">
           <van-radio :name="item.id" v-for="(item,i) in mediatextList" :key="i">
-          {{item.name}}
+          {{item.name}} ({{item.content}})
         </van-radio>
         </van-radio-group>
       </van-tab>
@@ -173,6 +212,10 @@ import { login} from '@/api/api'
 export default {
   data() {
       return {
+        showTimepicker:false,
+        sendtime: '',
+        typeradio:'1',
+        preiodResult:[],
         choiceMedia:'',
         mediaActive:0,
         mediaradio:'0',
@@ -198,19 +241,7 @@ export default {
         showEdit:false,
         textName:'',
         textContent:'',
-        textList:[{
-          name:'dsfdf',
-          content:'sdfsdsf'
-        },{
-          name:'dsfdf2',
-          content:'sdfsdsf2'
-        },{
-          name:'dsfdf3',
-          content:'sdfsdsf3'
-        },{
-          name:'dsfdf3',
-          content:'sdfsds33f'
-        }
+        textList:[ 
 
         ],
         active:0,
@@ -228,8 +259,34 @@ export default {
     }
     this.getMdeia()
     this._getGroupList()
+    this.getGroupSendList()
   },
   methods: {
+    tabChanged(){
+      if(this.active ==0) {
+        this.getGroupSendList()
+      } else {
+        this.getSendedList()
+      }
+    },
+    getSendedList(){
+      let obj ={}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.type = 1 //get list
+      this.grouplist = []
+      this.$getapi('robot/sendGroup',obj).then(res=>{
+        this.grouplist = res.data
+      })
+    },
+    getGroupSendList(){
+      let obj ={}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.type = 0 //get list
+      this.textList = []
+      this.$getapi('robot/sendGroup',obj).then(res=>{
+        this.textList = res.data
+      })
+    },
     summit(){
       if (!this.newTitle) {
         Toast.fail('请输入标题')
@@ -248,10 +305,32 @@ export default {
         return
       }   
  
+       if (!this.sendtime) {
+        Toast.fail('请选择发送时间')
+        return
+      }   
       if (this.radioPeriod==2 && this.periodresult.length ==0) {
         Toast.fail('请选择发送时间')
         return
-      }       
+      }      
+      let obj ={}
+      obj.Uin = localStorage['_stock_Uin']
+      obj.title = this.newTitle
+      obj.content = this.choiceMedia.content
+      obj.mediaType = this.choiceMedia.type
+      obj.group = this.groupChoiced
+      obj.period = this.radioPeriod
+      obj.sendPeriod= this.radioPeriod==2?this.periodresult:0
+      obj.sendtime = this.sendtime
+      this.$getapi('robot/sendGroup',obj).then(res=>{
+      if (res.status == 200 ) {
+          Toast.success('成功')
+          this.showGroupAdd=false
+        } else {
+          Toast.fail(res.msg)
+        }
+      })
+  
     },
     _getGroupList(){
       let obj ={}
@@ -288,7 +367,7 @@ export default {
               this.mediapicList = []
               this.mediaList = res.data
               res.data.forEach(v=>{
-                if (v.type ==0 ){
+                if (v.type ==1 ){
                   this.mediatextList.push(v)
                 } else {
                   this.mediapicList.push(v)
@@ -319,12 +398,25 @@ export default {
       // 此时可以自行将文件上传至服务器
       console.log(file);
     },
-    del(){
+    del(item){
       Dialog.confirm({
         title: '确定删除',
         message: '删除后不可恢复'
       }).then(() => {
-          this.step = 2
+
+       
+          let obj ={}
+          obj.type =3
+          obj.id = item.id
+          this.$getapi('robot/sendGroup',obj).then(res=>{
+                if (res.status == 200 ) {
+                  Toast.success('ok')    
+                      this.step = 2
+                      this.getGroupSendList()           
+                } else {
+                  Toast.fail(res.msg)
+                }
+           })
         // on confirm
       }).catch(() => {
       
@@ -333,8 +425,11 @@ export default {
     },
     goedit(item){
       this.showEdit=!this.showEdit
-      this.textName = item.name
+      this.textName = item.title
       this.textContent = item.content
+      this.preiodResult = item.sendPeriod.split(',')
+      this.typeradio = item.type
+
     },
     goback(){
       this.$router.back(-1)

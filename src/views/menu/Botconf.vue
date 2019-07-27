@@ -29,7 +29,7 @@
       </div>
      
       <div class = "group-box">
-         <van-button plain type="primary" size="small" @click="gourl('/add')">添加微信群</van-button></p>
+         <van-button plain type="primary" size="small" @click="gourl('/add')">添加要管理的微信群</van-button></p>
      
       </div>
    </div>

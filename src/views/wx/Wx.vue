@@ -138,30 +138,16 @@ export default {
       }
     },
   created(){
-    this.checkOnline()
-    // this.groupList = this.serverList
-    if (!localStorage['_stock_Uin']) {
-      Dialog.confirm({
-        title: '提示',
-        message: '您尚未登陆机器人，前往登陆？'
-      }).then(() => {
-        this.gourl('/botconf')
-        // on confirm
-      }).catch(() => {
-        // on cancel
-      });
-      
-    } else {
-       this._getGroupList()
-    }
+  
 
   },
   methods: {
     checkOnline(){
+
       let obj={}
       obj.Uin = localStorage['_stock_Uin']
       obj.type = 4 //check
-      this.$getapi('robot/dogroup',obj).then(res=>{
+      this.$getapi('robot/doRobot',obj).then(res=>{
           if (res.status == 200 ) {
         
           } else {
@@ -221,11 +207,33 @@ export default {
         })
     },
   },
+  destroyed(){
+    console.log('destory')
+    document.querySelector('.van-dialog').remove()
+    // Dialog.close()
+  },
   mounted () {
-
+  
+    // this.groupList = this.serverList
+    if (!localStorage['_stock_Uin']) {
+       Dialog.confirm({
+        title: '提示',
+        message: '您尚未登陆机器人，前往登陆？',
+        closeOnPopstate:true
+      }).then(() => {
+        this.gourl('/botconf')
+        // on confirm
+      }).catch(() => {
+        // on cancel
+      });
+ 
+    } else {
+      this._getGroupList()
+      this.checkOnline()
+    }
   },
   components: {
-    
+    Dialog
   },
 }
 </script>

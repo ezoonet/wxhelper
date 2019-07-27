@@ -184,6 +184,7 @@ export default {
  
     if (!localStorage['_stock_uid']) {
       Toast.fail('请先登陆')
+      this.gourl('/')
       return
     }
     this._getMediaList()

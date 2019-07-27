@@ -89,15 +89,16 @@
 
             <div class="reply-values">
                 <van-row >
-                  <van-col span="10">回复（随机上限3个）</van-col>
+                  <van-col span="10">回复</van-col>
                   <van-col span="6"> </van-col>
                   <van-col span="8" @click.native="_addFrom(1)" style="color:green"><span style="padding-right: 6px" ><van-icon name="plus" /></span><span >添加回复</span></van-col>
                 </van-row>
+               
                 <van-cell-group v-for="(item,i) in replyList" :key="i">
                   <van-cell   value=""  style="align-items: center;">
                     <template slot="title" >
                       <span class="custom-title">
-                       <van-field autofocus  v-model="item.text" :disabled="RpyTextDisabled" placeholder="请输入内容" />
+                       <van-field autofocus   v-model="replyList[i]" :disabled="RpyTextDisabled" placeholder="请输入内容" />
                      </span>
                     
                     </template>
@@ -120,13 +121,14 @@
 
             </div>
 
+            <van-button style="margin-top:20px" type="primary" plain size="normal" @click="submitRly">提交新增</van-button>
         </div>
 
 
 
 
-        <div class="reply-button">
-             <van-button type="primary" plain size="normal" @click="showReply=!showReply">新增回复</van-button>
+        <div class="reply-button" v-if="!showReply">
+             <van-button type="primary" plain size="normal" @click="showReply=true">新增回复</van-button>
          </div>
 
 
@@ -166,6 +168,21 @@
 <script>
 import { Toast,Dialog } from 'vant';
 import { login} from '@/api/api'
+Array.prototype.indexOf = function (val) {
+    for (var i = 0; i < this.length; i++) {
+        if (this[i] == val) return i;
+    }
+    return -1;
+};
+
+Array.prototype.remove = function (val) {
+    var index = this.indexOf(val);
+    if (index > -1) {
+        this.splice(index, 1);
+    }
+};
+
+
 export default {
   data() {
       return {
@@ -178,33 +195,14 @@ export default {
         textDisabled:true,
         newText:'',
         showAdd:false,
-        keys:['房贷首付','fdsf','fs','sfsfs','fsdfsfsdfsf'],
-        replyList:[{
-          id:0,
-          text:'sdfsdfs'
-        },{
-          id:1,
-          text:'sdfsdf11s'
-        },{
-          id:2,
-          text:'sdfsd22fs'
-        }
+        keys:[],
+        replyList:[
+         
 
         ],
         showReply:false,
-        keysList:[{
-          id:0,
-          text:'sdf'
-        },{
-          id:1,
-          text:'sdfdff'
-        },{
-          id:2,
-          text:'sdfddff'
-        },{
-          id:3,
-          text:'sdsdfsf'
-        },
+        keysList:[
+
         ],
         active:0,
         id:this.$route.params.id,
@@ -229,6 +227,7 @@ export default {
       obj.Uin = localStorage['_stock_Uin']
       obj.groupid = this.id
       obj.type = 0
+      this.keysList =[]
       this.$getapi('robot/manageReply',obj).then(res=>{
         if (res.status == 200 ) {
           this.keysList = res.data
@@ -251,31 +250,69 @@ export default {
       })
     },
     _delRly(item){
+
       Dialog.confirm({
         title: '提示',
         message: '确定删除'
       }).then(() => {
+         this.replyList.remove(item)
         // on confirm
       }).catch(() => {
         // on cancel
       });
     },
     _editRly(item){
-      console.log(item)
+      
       this.RpyTextDisabled = !this.RpyTextDisabled
+      if (this.RpyTextDisabled) {
+        //完成编辑
+        console.log('final'+item)
+      } else {
+        //开始编辑
+        console.log('orign'+item)
+      }
 
     },
+    submitRly(){
+      console.log(this.keys)
+      console.log(this.replyList)
+      if (this.keys.length ==0 ) {
+        Toast.fail('请先设置回复关键词')
+        return
+      }  
+      if (this.replyList.length !=1) {
+        Toast.fail('回复内容错误')
+        return
+      }
+
+
+          let obj = {}
+          obj.Uin = localStorage['_stock_Uin']
+          obj.type = 1
+          obj.groupid = this.id
+          obj.keywords = this.keys
+          obj.content = this.replyList
+          console.log(obj)
+          return
+          this.$getapi('robot/manageReply',obj).then(res=>{
+            if (res.status == 200 ) {
+               this._getReply()
+              Toast.success('ok')
+            } else {
+              Toast.fail(res.msg)
+            }
+          })
+      // this.showReply=!this.showReply
+    },
     onConfirm(){
+      console.log(this.addType)
       if (this.addType == 0) {
           this.keys.push(this.addText)
          
       }
        if (this.addType == 1) {
-          let obj = {
-            id:this.replyList.length+1,
-            text:this.addText
-          }
-          this.replyList.push(obj)
+          
+          this.replyList.push(this.addText)
       } 
 
     },
@@ -288,8 +325,8 @@ export default {
         Toast.fail('超过5个')
         return
       }
-      if (type ==1 && this.replyList.length>3) {
-        Toast.fail('超过3个')
+      if (type ==1 && this.replyList.length>=1) {
+        Toast.fail('超过1个')
         return
       }
       this.addType = type
@@ -396,11 +433,13 @@ export default {
       this.showAdd = false
     },
     _delkey(item){
+ 
      Dialog.confirm({
         title: '提示',
         message: '确定删除'
       }).then(() => {
-        console.log(item)
+        this.keys.remove(item); 
+
         // on confirm
       }).catch(() => {
         // on cancel

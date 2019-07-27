@@ -57,6 +57,7 @@
                               rows="5"
                             />
                           </van-cell-group>
+
                        <van-cell-group>
                          <van-checkbox-group v-model="preiodResult" style="display: flex; flex-wrap: wrap;">
                             <van-checkbox style="margin-right:10px;"
@@ -67,10 +68,10 @@
                               {{ item2 }}
                             </van-checkbox>
                           </van-checkbox-group>
-
                        </van-cell-group>
 
 
+           
                  <!-- <van-radio-group style="margin-top:20px" disabled v-model="typeradio">
                     <van-radio name="1">文字</van-radio>
                     <van-radio name="2">图片</van-radio>
@@ -85,7 +86,7 @@
  
                   
 
-              <van-button type="primary" plain size="large" @click="showGroupAdd=true">新增群发</van-button> 
+              <van-button style="margin-top:35px" type="primary" plain size="large" @click="showGroupAdd=true">新增群发</van-button> 
             </div>
 
             <div class="groupadd-box" v-if="showGroupAdd">
@@ -122,7 +123,7 @@
                 <van-radio name="1">不重复</van-radio>
                 <van-radio name="2">周期重复</van-radio>
               </van-radio-group>
-            <van-checkbox-group v-model="periodresult" style="margin-top:25px;display:flex; flex-wrap: wrap;" >
+            <van-checkbox-group v-if="radioPeriod==2" v-model="periodresult" style="margin-top:25px;display:flex; flex-wrap: wrap;" >
               <van-checkbox
                 v-for="(item, index) in periodWeek"
                 :key="index"
@@ -131,6 +132,19 @@
                 {{ item }}
               </van-checkbox>
             </van-checkbox-group>
+
+             <van-cell-group  v-if="radioPeriod==1" >
+              <van-radio-group v-model="periodText" style="display: flex; flex-wrap: wrap;">
+                   <van-radio style="margin-right:10px;"
+                   v-for="(item2, i2) in periodWeek"
+                  :key="i2"
+                  :name="item2">
+                 {{ item2 }}
+              </van-radio>  
+              </van-radio-group>
+            </van-cell-group>
+
+
 
            </van-cell-group>
    
@@ -164,11 +178,22 @@
             finished-text="没有更多了"
             @load="onLoad"
           >
+
             <van-cell
-              v-for="(item,i) in grouplist"
+              v-for="(item,i) in sendedList"
               :key="i"
-              :title="item.name"
-            />
+              :value = "formatT(item.createtime)"
+   >
+                <template slot="title">
+                  <span>{{item.Nickname}}</span>
+                  <van-tag type="danger">{{item.type==1?'文':'图'}}</van-tag>
+                </template>
+                <template slot="label">
+                  <span v-if="item.type==1">{{item.content}}</span>
+                  <span v-if="item.type==2"><img style="width:100px;" :src="item.content"></span>
+                </template>
+
+            </van-cell>
           </van-list>
       
            </van-tab>
@@ -208,7 +233,7 @@
 
 <script>
 import { Toast,Dialog,Uploader } from 'vant';
-import { login} from '@/api/api'
+import { timestampToTime } from '@/api/api'
 export default {
   data() {
       return {
@@ -225,6 +250,7 @@ export default {
         mediapicList:[],
         showMedia:false,
         periodresult:[],
+        periodText:'',
         currentDate: new Date(),
         periodWeek:['星期一','星期二','星期三','星期四','星期五','星期六','星期日'],
         radioPeriod:0,
@@ -241,9 +267,10 @@ export default {
         showEdit:false,
         textName:'',
         textContent:'',
+        sendedList:[],
         textList:[ 
 
-        ],
+        ], //待发送部分
         active:0,
         id:this.$route.params.id,
       }
@@ -262,6 +289,9 @@ export default {
     this.getGroupSendList()
   },
   methods: {
+    formatT(t){
+      return timestampToTime(t)
+    },
     tabChanged(){
       if(this.active ==0) {
         this.getGroupSendList()
@@ -273,9 +303,9 @@ export default {
       let obj ={}
       obj.Uin = localStorage['_stock_Uin']
       obj.type = 1 //get list
-      this.grouplist = []
+      this.sendedList = []
       this.$getapi('robot/sendGroup',obj).then(res=>{
-        this.grouplist = res.data
+        this.sendedList = res.data
       })
     },
     getGroupSendList(){
@@ -309,10 +339,14 @@ export default {
         Toast.fail('请选择发送时间')
         return
       }   
-      if (this.radioPeriod==2 && this.periodresult.length ==0) {
-        Toast.fail('请选择发送时间')
+      if (this.periodresult.length ==0 && this.periodText=='') {
+        Toast.fail('请选择发送日期')
         return
       }      
+      if (this.radioPeriod=='1') {
+        this.periodresult = []
+        this.periodresult.push(this.periodText)
+      }
       let obj ={}
       obj.Uin = localStorage['_stock_Uin']
       obj.title = this.newTitle
@@ -320,12 +354,15 @@ export default {
       obj.mediaType = this.choiceMedia.type
       obj.group = this.groupChoiced
       obj.period = this.radioPeriod
-      obj.sendPeriod= this.radioPeriod==2?this.periodresult:0
+      obj.sendPeriod= this.periodresult
       obj.sendtime = this.sendtime
+
+
       this.$getapi('robot/sendGroup',obj).then(res=>{
       if (res.status == 200 ) {
           Toast.success('成功')
           this.showGroupAdd=false
+          this.getGroupSendList()
         } else {
           Toast.fail(res.msg)
         }
@@ -336,7 +373,7 @@ export default {
       let obj ={}
       obj.Uin = localStorage['_stock_Uin']
       obj.type = 0
-      this.list = []
+      this.grouplist = []
 
       this.$getapi('robot/dogroup',obj).then(res=>{
             if (res.status == 200 ) {
@@ -379,20 +416,22 @@ export default {
             }
           })
     },
-    onLoad() {
+    onLoad() { 
+      this.finished = true;
+      this.loading = false;
       // 异步更新数据
-      setTimeout(() => {
-        for (let i = 0; i < 10; i++) {
-          this.grouplist.push(this.grouplist.length + 1);
-        }
-        // 加载状态结束
-        this.loading = false;
+      // setTimeout(() => {
+      //   for (let i = 0; i < 10; i++) {
+      //     this.grouplist.push(this.grouplist.length + 1);
+      //   }
+      //   // 加载状态结束
+      //   this.loading = false;
 
-        // 数据全部加载完成
-        if (this.grouplist.length >= 40) {
-          this.finished = true;
-        }
-      }, 500);
+      //   // 数据全部加载完成
+      //   if (this.grouplist.length >= 40) {
+      //     this.finished = true;
+      //   }
+      // }, 500);
     },
     afterRead(file) {
       // 此时可以自行将文件上传至服务器
